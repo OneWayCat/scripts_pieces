@@ -1,3 +1,61 @@
+// 利用AVX对mat数据进行加速
+#include <opencv2/opencv.hpp>
+#include <immintrin.h>  // 包含AVX头文件
+
+void processImageAVX(cv::Mat& input, cv::Mat& output) {
+    int rows = input.rows;
+    int cols = input.cols;
+
+    // 检查图像尺寸是否为4的倍数，以确保可以使用AVX指令集
+    if (cols % 4 != 0) {
+        std::cerr << "Error: Image width must be a multiple of 4 for AVX optimization." << std::endl;
+        return;
+    }
+
+    // 遍历图像的每一行
+    for (int row = 0; row < rows; ++row) {
+        double* inputPtr = input.ptr<double>(row);
+        double* outputPtr = output.ptr<double>(row);
+
+        // 使用AVX指令处理每4个double值
+        for (int col = 0; col < cols; col += 4) {
+            // 读取4个double值
+            __m256d data = _mm256_loadu_pd(inputPtr + col);
+
+            // 示例：将每个double值乘以常数
+            __m256d constant = _mm256_set1_pd(2.0);
+            data = _mm256_mul_pd(data, constant);
+
+            // 将处理后的double值存回输出图像
+            _mm256_storeu_pd(outputPtr + col, data);
+        }
+    }
+}
+
+int main() {
+    // 读取图像
+    cv::Mat inputImage = cv::imread("input_image.jpg", cv::IMREAD_GRAYSCALE);
+
+    if (inputImage.empty()) {
+        std::cerr << "Error: Unable to read the input image." << std::endl;
+        return -1;
+    }
+
+    // 创建输出图像
+    cv::Mat outputImage(inputImage.size(), CV_64F);
+
+    // 处理图像（使用AVX优化）
+    processImageAVX(inputImage, outputImage);
+
+    // 显示结果或保存输出图像
+    // 请注意，如果输出图像为CV_64F类型，可能需要转换为合适的范围以便显示
+    cv::imshow("Output Image (AVX)", outputImage);
+    cv::waitKey(0);
+
+    return 0;
+}
+
+
 // 方法1：枷锁对myFunction调用进行保护
 #include <Windows.h>
 #include <iostream>
