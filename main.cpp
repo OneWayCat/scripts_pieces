@@ -55,6 +55,30 @@ int main() {
     return 0;
 }
 
+// omp与avx进行结合
+#pragma omp parallel for
+for (int row = 0; row < rows; ++row) {
+    double* inputPtr = input.ptr<double>(row);
+    double* outputPtr = output.ptr<double>(row);
+
+    // 使用AVX指令处理每4个double值
+    for (int col = 0; col < cols; col += 4) {
+        // 读取4个double值
+        __m256d data = _mm256_loadu_pd(inputPtr + col);
+        // AVX操作逻辑
+        // ...
+
+        // 将处理后的double值存回输出图像
+        _mm256_storeu_pd(outputPtr + col, data);
+    }
+
+    // 处理剩余部分（非4的整数倍）
+    for (int col = cols - cols % 4; col < cols; ++col) {
+        // 处理剩余部分的逻辑
+        outputPtr[col] = inputPtr[col];
+    }
+}
+
 
 // 方法1：枷锁对myFunction调用进行保护
 #include <Windows.h>
