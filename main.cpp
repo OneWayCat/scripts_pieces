@@ -1,3 +1,41 @@
+// 特征值分解计算多项式的解
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
+int main() {
+    // 选择方程的系数
+    double a = 1.0;
+    double b = -1.0;
+    double c = 2.0;
+    double d = -1.0;
+
+    // 转换为标准形式
+    double p = b / a;
+    double q = c / a;
+    double r = d / a;
+
+    // 构造矩阵 A
+    cv::Mat A = (cv::Mat_<double>(3, 3) <<
+        0, 1, 0,
+        0, 0, 1,
+        -r / p, -q / p, -p / p);
+
+    // 计算特征值
+    cv::Mat eigenvalues, eigenvectors;
+    cv::eigen(A, eigenvalues, eigenvectors);
+
+    // 输出特征值，包括实部和虚部
+    std::cout << "Complex solutions: " << std::endl;
+    for (int i = 0; i < eigenvalues.rows; ++i) {
+        std::complex<double> root(eigenvalues.at<double>(i), 0.0);
+        std::cout << "x_" << i + 1 << " = " << root << std::endl;
+    }
+
+    return 0;
+}
+
+
+
 // 利用AVX对mat数据进行加速
 #include <opencv2/opencv.hpp>
 #include <immintrin.h>  // 包含AVX头文件
