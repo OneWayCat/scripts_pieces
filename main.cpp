@@ -80,6 +80,56 @@ int main() {
     return 0;
 }
 
+/******************************加载编译好的二进制文件************************************/
+#include <CL/cl.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    // 假设已经初始化了OpenCL环境，并且有一个有效的context和device
+
+    cl_int err;
+    cl_context context;
+    cl_device_id device;
+    // 初始化OpenCL环境和获取context/device的代码（略去细节）
+
+    // 步骤1: 读取二进制文件内容
+    FILE *binaryFile = fopen("kernel.bin", "rb");
+    if (!binaryFile) {
+        perror("Error opening binary file");
+        exit(EXIT_FAILURE);
+    }
+    fseek(binaryFile, 0, SEEK_END);
+    size_t binarySize = ftell(binaryFile);
+    fseek(binaryFile, 0, SEEK_SET);
+    unsigned char *binary = (unsigned char *)malloc(binarySize);
+    fread(binary, binarySize, 1, binaryFile);
+    fclose(binaryFile);
+
+    // 步骤2: 使用clCreateProgramWithBinary创建程序对象
+    const unsigned char **binaryPtr = &binary;
+    size_t *binarySizes = &binarySize;
+    cl_program program = clCreateProgramWithBinary(context, 1, &device, binarySizes, &binaryPtr, NULL, &err);
+    if (err != CL_SUCCESS) {
+        printf("Failed to create program with binary.\n");
+        free(binary);
+        exit(EXIT_FAILURE);
+    }
+
+    // 步骤3: 构建程序（如果二进制是IR，则需要构建）
+    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    if (err != CL_SUCCESS) {
+        // 处理构建错误（略）
+    }
+
+    // 清理资源
+    free(binary);
+    clReleaseProgram(program);
+    // 清理其他OpenCL资源（略去细节）
+
+    return 0;
+}
+
 // 特征值分解计算多项式的解
 #include <iostream>
 #include <opencv2/opencv.hpp>
