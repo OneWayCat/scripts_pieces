@@ -1,3 +1,85 @@
+#include <CL/cl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main() {
+    // 步骤1: 假设已有OpenCL源代码在"kernel.cl"文件中
+
+    // 步骤2和3: 创建程序对象并编译
+    cl_int err;
+    cl_context context;
+    cl_device_id device;
+    cl_program program;
+    size_t sourceSize;
+    char *sourceStr;
+
+    // 初始化OpenCL环境，获取context和device（略去细节）
+    // ...
+
+    // 读取OpenCL源代码文件
+    FILE *file = fopen("kernel.cl", "rb");
+    if (!file) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+    fseek(file, 0, SEEK_END);
+    sourceSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    sourceStr = (char *)malloc(sourceSize + 1);
+    fread(sourceStr, sourceSize, 1, file);
+    fclose(file);
+    sourceStr[sourceSize] = '\0';
+
+    // 创建程序对象
+    program = clCreateProgramWithSource(context, 1, (const char**)&sourceStr, &sourceSize, &err);
+    free(sourceStr); // 释放源代码字符串
+    if (err != CL_SUCCESS) {
+        printf("Failed to create program with source.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // 编译程序对象
+    err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    if (err != CL_SUCCESS) {
+        // 处理编译错误（略）
+        exit(EXIT_FAILURE);
+    }
+
+    // 步骤4: 提取二进制代码
+    size_t binarySize;
+    err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &binarySize, NULL);
+    if (err != CL_SUCCESS) {
+        printf("Failed to get binary size.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    unsigned char *binary = (unsigned char *)malloc(binarySize);
+    err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *), &binary, NULL);
+    if (err != CL_SUCCESS) {
+        printf("Failed to get program binaries.\n");
+        free(binary);
+        exit(EXIT_FAILURE);
+    }
+
+    // 步骤5: 写入二进制文件
+    FILE *binaryFile = fopen("kernel.bin", "wb");
+    if (!binaryFile) {
+        perror("Error opening binary file");
+        free(binary);
+        exit(EXIT_FAILURE);
+    }
+    fwrite(binary, binarySize, 1, binaryFile);
+    fclose(binaryFile);
+
+    // 清理资源
+    free(binary);
+    clReleaseProgram(program);
+    // 清理其他OpenCL资源（略去细节）
+
+    return 0;
+}
+
 // 特征值分解计算多项式的解
 #include <iostream>
 #include <opencv2/opencv.hpp>
