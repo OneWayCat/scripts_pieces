@@ -3,7 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+template<std::size_t... N>
+constexpr auto create_array(std::index_sequence<N...>) {
+    return std::array<float, sizeof...(N)>{ (2 * N * 1.0 / 100)... };
+}
+
 int main() {
+    constexpr auto arr = create_array(std::make_index_sequence<100>{});
     // 步骤1: 假设已有OpenCL源代码在"kernel.cl"文件中
 
     // 步骤2和3: 创建程序对象并编译
