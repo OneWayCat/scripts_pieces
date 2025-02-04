@@ -1,3 +1,45 @@
+/*
+// 在不阻塞线程的前提下读取日志详细
+import subprocess
+import threading
+
+def read_stderr(proc, queue):
+    """线程函数，用于读取 stderr 输出并将其放入队列中"""
+    for line in proc.stderr:
+        queue.append(line.decode('utf-8').strip())
+
+def run_command(command):
+    """执行命令并异步捕获 stderr 输出"""
+    queue = []
+    p = subprocess.Popen(command, shell=True, text=True, bufsize=1, 
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+    # 创建一个线程来读取 stderr 输出
+    stderr_thread = threading.Thread(target=read_stderr, args=(p, queue))
+    stderr_thread.start()
+    
+    # 获取命令的输出结果
+    stdout, stderr = p.communicate()
+    
+    # 等待 stderr 线程结束
+    stderr_thread.join()
+    
+    # 从队列中获取 stderr 输出
+    errors = queue
+    return stdout, errors
+
+# 使用示例
+if __name__ == "__main__":
+    command = "your-command-here 2>&1"  # 确保命令的 stderr 输出被捕获
+    stdout, errors = run_command(command)
+    
+    print("STDOUT:")
+    print(stdout)
+    
+    print("\nSTDERR:")
+    for error in errors:
+        print(error)
+*/
 #include <CL/cl.h>
 #include <stdio.h>
 #include <stdlib.h>
