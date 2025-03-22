@@ -1,86 +1,42 @@
-/*
-// Basic warp usage
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+#include "eigen3/Eigen/Dense"
 
-def getPoints(event,x,y,flags,param):
-    global click_times,row,col,points
-    if event==cv2.EVENT_LBUTTONDOWN:
-        click_times+=1
-        points[click_times-1]=[x,y]#将点击点的左边传给我们的points，用来变换的第一批参数
-        cv2.circle(img,(x,y),4,(25,25,255),-1)#标记我们点击的位置信息
-        cv2.rectangle(img,(col-60,row-20),(col,row),(255,255,255),-1)#空出一小块地方用来现实鼠标点击的位置
-        cv2.putText(img,'%d,%d'%(x,y),(col-60,row-8),cv2.FONT_HERSHEY_SIMPLEX,0.4,(0,0,0),1)
-		
+// Solve a quartic equation using OpenCV and eigen
+std::vector<std::complex<double>> solveQuartic(const std::vector<double>& coef) {
+    if (coef.size() != 5) {
+        throw std::invalid_argument("Quartic equation must have exactly 5 coefficients.");
+    }
 
-path = r'D:\PythonScripts\test.png'
-img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), -1)
+    double a = coef[0], b = coef[1], c = coef[2], d = coef[3], e = coef[4];
+    if (a == 0) {
+        throw std::invalid_argument("Coefficient 'a' cannot be zero.");
+    }
 
-resized_img = cv2.resize(img, None, fx=0.5, fy=0.5)
+    // Normalize coefficients
+    b /= a;
+    c /= a;
+    d /= a;
+    e /= a;
 
-cv2.namedWindow('image')
-cv2.setMouseCallback('image', getPoints)
+    // Construct the companion matrix
+    Eigen::Matrix4d C;
+    C << 0, 0, 0, -e,
+        1, 0, 0, -d,
+        0, 1, 0, -c,
+        0, 0, 1, -b;
 
-click_times = 0
-points=np.float32([[0,0],[0,0],[0,0],[0,0]])
-row, col, _ = img.shape
+    // Compute eigenvalues
+    Eigen::EigenSolver<Eigen::Matrix4d> solver(C);
+    Eigen::Vector4cd roots = solver.eigenvalues();
 
-while(1):
-    cv2.imshow('image',img)
-    if cv2.waitKey(10)& 0xFF==ord('q') or click_times>=4:#当按下q或者满4个点退出，进行变换
-        break
-cv2.destroyAllWindows()
+    // Convert results to std::vector<std::complex<double>>
+    std::vector<std::complex<double>> result;
+    for (int i = 0; i < 4; ++i) {
+        result.push_back(roots[i]);
+    }
 
-pts2=np.float32([[0,0],[300,0],[0,300],[300,300]])#输出图像的分辨率
-M=cv2.getPerspectiveTransform(points,pts2)
-dst=cv2.warpPerspective(img,M,(300,300))#透视变换
-print(points)
-cv2.imwrite(r'D:\PythonScripts\test1.png', dst)
-*/
+    return result;
+}
 
-/*
-// 在不阻塞线程的前提下读取日志详细
-import subprocess
-import threading
-
-def read_stderr(proc, queue):
-    """线程函数，用于读取 stderr 输出并将其放入队列中"""
-    for line in proc.stderr:
-        queue.append(line.decode('utf-8').strip())
-
-def run_command(command):
-    """执行命令并异步捕获 stderr 输出"""
-    queue = []
-    p = subprocess.Popen(command, shell=True, text=True, bufsize=1, 
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
-    # 创建一个线程来读取 stderr 输出
-    stderr_thread = threading.Thread(target=read_stderr, args=(p, queue))
-    stderr_thread.start()
-    
-    # 获取命令的输出结果
-    stdout, stderr = p.communicate()
-    
-    # 等待 stderr 线程结束
-    stderr_thread.join()
-    
-    # 从队列中获取 stderr 输出
-    errors = queue
-    return stdout, errors
-
-# 使用示例
-if __name__ == "__main__":
-    command = "your-command-here 2>&1"  # 确保命令的 stderr 输出被捕获
-    stdout, errors = run_command(command)
-    
-    print("STDOUT:")
-    print(stdout)
-    
-    print("\nSTDERR:")
-    for error in errors:
-        print(error)
-*/
 #include <CL/cl.h>
 #include <stdio.h>
 #include <stdlib.h>
