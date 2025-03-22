@@ -1,6 +1,6 @@
 #include "eigen3/Eigen/Dense"
 
-// Solve a quartic equation using OpenCV and eigen
+// np.roots() 采用伴随矩阵求特征值（Companion Matrix Eigenvalues）
 std::vector<std::complex<double>> solveQuartic(const std::vector<double>& coef) {
     if (coef.size() != 5) {
         throw std::invalid_argument("Quartic equation must have exactly 5 coefficients.");
